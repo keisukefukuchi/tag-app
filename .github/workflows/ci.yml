@@ -1,0 +1,44 @@
+name: Execute Command Based on Environment and Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to use (e.g., dev, prod)'
+        type: choice
+        options: [dev, prod]
+        required: true
+        default: dev
+      tag:
+        description: 'Tag to use (e.g., dev1, dev2)'
+        type: choice
+        options: [dev1, dev2]
+        required: true
+        default: dev1
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install CUE
+        run: |
+          curl -L https://github.com/cue-lang/cue/releases/download/v0.5.0/cue_v0.5.0_linux_amd64.tar.gz | tar -xz
+          sudo mv cue /usr/local/bin/cue
+
+      - name: Generate Command Based on Inputs
+        run: |
+          echo "Inputs: Environment=${{ inputs.environment }}, Tag=${{ inputs.tag }}"
+          cue_file="conf/${{ inputs.environment }}/${{ inputs.tag }}.cue"
+          echo "Using cue file: $cue_file"
+          cue eval $cue_file --expression "command" > command.sh
+          echo "Generated command:"
+          cat command.sh
+
+      - name: Execute Command
+        run: |
+          chmod +x command.sh
+          ./command.sh
