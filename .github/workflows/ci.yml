@@ -1,4 +1,4 @@
-name: Execute Command Based on Environment and Tag
+name: Generate Command Based on Inputs
 
 on:
   workflow_dispatch:
@@ -32,13 +32,17 @@ jobs:
       - name: Generate Command Based on Inputs
         run: |
           echo "Inputs: Environment=${{ inputs.environment }}, Tag=${{ inputs.tag }}"
+          
           cue_file="conf/${{ inputs.environment }}/${{ inputs.tag }}.cue"
           echo "Using cue file: $cue_file"
-          cue eval $cue_file --expression "command" > command.sh
+          
+          # cue evalを実行し、その結果を一時的なファイルに保存
+          temp_file="generated_command.txt"
+          cue eval $cue_file --expression "command" > $temp_file
+          
+          # 一時ファイルの内容を出力
           echo "Generated command:"
-          cat command.sh
-
-      - name: Execute Command
-        run: |
-          chmod +x command.sh
-          ./command.sh
+          cat $temp_file
+          
+          # 一時ファイルを削除
+          rm $temp_file
